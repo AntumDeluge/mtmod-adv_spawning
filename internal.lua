@@ -64,7 +64,12 @@ function adv_spawning.initialize()
 	adv_spawning.max_spawning_frequency_hz = 5
 	adv_spawning.max_mapgen_tries_per_step = 3
 	adv_spawning.spawner_warned = {}
-	adv_spawning.loglevel = 0
+	if adv_spawning.debug then
+		adv_spawning.loglevel = 5
+	else
+		adv_spawning.loglevel = 0
+	end
+	core.log("action","ADV_SPAWNING: loglevel is: " .. adv_spawning.loglevel)
 	adv_spawning.spawner_validation_delta = 0
 	adv_spawning.spawner_validation_interval = 30
 
@@ -381,7 +386,7 @@ function adv_spawning.handlespawner(spawnername,spawnerpos,minp,maxp,ignore_acti
 	local spawndef = adv_spawning.spawner_definitions[spawnername]
 
 	if not adv_spawning.check_daytime(spawndef.daytimes) then
-		adv_spawning.log("info","didn't meet daytime check")
+		adv_spawning.dbg_log(3,"didn't meet daytime check")
 		return false,nil
 	end
 
@@ -429,7 +434,7 @@ function adv_spawning.handlespawner(spawnername,spawnerpos,minp,maxp,ignore_acti
 	--check if we did found a position within relative range
 	if new_pos.y == nil then
 		new_pos.y="?"
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't find a suitable y pos "
 			.. lower_y .. "<-->" .. upper_y )
 		return false,nil
@@ -437,14 +442,14 @@ function adv_spawning.handlespawner(spawnername,spawnerpos,minp,maxp,ignore_acti
 
 	--check absolute height
 	if not adv_spawning.check_absolute_height(new_pos,spawndef.absolute_height) then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't meet absolute height check")
 		return false,true
 	end
 
 	--check active area
 	if not ignore_active_area and not adv_spawning.check_active_block(new_pos) then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't meet active area check")
 		return false,nil
 	end
@@ -455,7 +460,7 @@ function adv_spawning.handlespawner(spawnername,spawnerpos,minp,maxp,ignore_acti
 										spawndef.surfaces,
 										spawndef.relative_height,
 										spawndef.spawn_inside) then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) ..
 			" didn't meet surface check, is: " ..
 			minetest.get_node({x=new_pos.x,z=new_pos.z,y=new_pos.y-1}).name)
@@ -468,7 +473,7 @@ function adv_spawning.handlespawner(spawnername,spawnerpos,minp,maxp,ignore_acti
 								spawndef.flat_area,
 								spawndef.spawn_inside,
 								spawndef.surfaces) then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't meet flat area check")
 		return false,nil
 	end
@@ -483,28 +488,28 @@ function adv_spawning.handlespawner(spawnername,spawnerpos,minp,maxp,ignore_acti
 	end
 
 	if not checkresult then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't meet collisionbox check")
 		return false,nil
 	end
 
 	--check entities around
 	if not adv_spawning.check_entities_around(new_pos,spawndef.entities_around) then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't meet entities check")
 		return false,nil
 	end
 
 	--check nodes around
 	if not adv_spawning.check_nodes_around(new_pos,spawndef.nodes_around) then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't meet nodes check")
 		return false,nil
 	end
 
 	--check light around
 	if not adv_spawning.check_light_around(new_pos,spawndef.light_around) then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't meet light  check")
 		return false,nil
 	end
@@ -519,14 +524,14 @@ function adv_spawning.handlespawner(spawnername,spawnerpos,minp,maxp,ignore_acti
 
 	--check humidity
 	if not adv_spawning.check_humidity_around(new_pos,spawndef.humidity_around) then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't meet humidity check")
 		return false,nil
 	end
 
 	--check temperature
 	if not adv_spawning.check_temperature_around(new_pos,spawndef.temperature_around) then
-		adv_spawning.log("info",
+		adv_spawning.dbg_log(3,
 			minetest.pos_to_string(new_pos) .. " didn't meet temperature check")
 		return false,nil
 	end
@@ -536,15 +541,16 @@ function adv_spawning.handlespawner(spawnername,spawnerpos,minp,maxp,ignore_acti
 		type(spawndef.custom_check) == "function") then
 
 		if not spawndef.custom_check(new_pos,spawndef) then
-			adv_spawning.log("info",
-				minetest.pos_to_string(new_pos) .. " didn't meet custom check")
+			adv_spawning.dbg_log(3,
+				minetest.pos_to_string(new_pos) .. " didn't meet custom check for: " ..
+				spawnername)
 			return false,nil
 		end
 	end
 
 	--do spawn
-	--print("Now spawning: " .. spawndef.spawnee .. " at " ..
-	--	minetest.pos_to_string(new_pos))
+	adv_spawning.dbg_log(0,"Calling spawner " .. spawnername .. " at " ..
+		minetest.pos_to_string(new_pos))
 
 	if type(spawndef.spawnee) == "function" then
 		spawndef.spawnee(new_pos)
@@ -765,27 +771,31 @@ function adv_spawning.check_daytime(daytimedefs)
 	local match = false
 
 	for i=1,#daytimedefs,1 do
+		local continue = false
 		if daytimedefs[i].begin ~= nil and
 			daytimedefs[i].stop ~= nil then
 
 			if current_time < daytimedefs[i].stop and
 				current_time > daytimedefs[i].begin then
 				match = true
+				break
 			end
-			break
+			continue = true
 		end
 
-		if daytimedefs[i].begin ~= nil and
+		if not continue and daytimedefs[i].begin ~= nil and
 			current_time > daytimedefs[i].begin then
 			match = true
 			break
 		end
 
-		if daytimedefs[i].stop ~= nil and
+		if not continue and daytimedefs[i].stop ~= nil and
 			current_time < daytimedefs[i].stop then
 			match = true
 			break
 		end
+		adv_spawning.dbg_log(4, "Daytime: no match " .. daytimedefs[i].begin  ..
+				" < " .. current_time .. " < " .. daytimedefs[i].stop)
 	end
 
 	return match

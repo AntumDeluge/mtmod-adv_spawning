@@ -19,7 +19,11 @@ end
 -- -----------------------------------------------------------------------------
 adv_spawning = {}
 
-adv_spawning.debug = core.setting_get("adv_spawning.debug")
+adv_spawning.debug = core.is_yes(core.setting_get("adv_spawning.debug"))
+
+if adv_spawning.debug then
+	core.log("action", "ADV_SPAWNING: debug mode enabled")
+end
 
 local adv_modpath = core.get_modpath("adv_spawning")
 
