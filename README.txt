@@ -195,6 +195,9 @@ Settings:
 
 Changelog:
 
+0.0.10
+ -remove debug output
+
 0.0.9
  -Fix broken spawner initialization
  -Add support for regenerating spawner seeds (only around active players)
