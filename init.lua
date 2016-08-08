@@ -10,7 +10,7 @@
 
 local version = "0.0.13"
 
-if adv_spawning ~= nil then
+if not minetest.global_exists("adv_spawning") then
 	core.log("error", "MOD: adv_spawning requires adv_spawning variable to be available")
 end
 
